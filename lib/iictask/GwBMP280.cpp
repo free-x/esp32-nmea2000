@@ -17,10 +17,10 @@
     #include <Adafruit_BMP280.h>
 #endif
 #ifdef _GWBMP280
-#define PRFX1 "BMP28011"
-#define PRFX2 "BMP28012"
-#define PRFX3 "BMP28021"
-#define PRFX4 "BMP28022"
+#define PRFX1 "BME28011"
+#define PRFX2 "BME28012"
+#define PRFX3 "BME28021"
+#define PRFX4 "BME28022"
 class BMP280Config : public SensorBase{
     public:
     bool prAct=true;
@@ -35,7 +35,7 @@ class BMP280Config : public SensorBase{
     uint32_t sensorId=-1;
     BMP280Config(GwApi * api, const String &prfx):SensorBase(api,prfx){
         }
-    virtual bool isActive(){return prAct||huAct||tmAct;}
+    virtual bool isActive(){return prAct||tmAct;}
     virtual bool initDevice(GwApi *api,TwoWire *wire){
         GwLog *logger=api->getLogger();
         device= new Adafruit_BMP280();
@@ -47,7 +47,7 @@ class BMP280Config : public SensorBase{
         }
         sensorId=device->sensorID();
         LOG_DEBUG(GwLog::LOG, "initialized %s at %d, sensorId 0x%x", prefix.c_str(), addr, sensorId);
-        return (sensorId == 0x56 || sensorId == 0x57 || sensorId == 0x58) || tmAct || prAct;
+        return (sensorId == 0x56 || sensorId == 0x57 || sensorId == 0x58)?true:false;
     }
     virtual bool preinit(GwApi * api){
         GwLog *logger=api->getLogger();
@@ -77,7 +77,7 @@ class BMP280Config : public SensorBase{
             sendN2kTemperature(api, *this, temperature, counterId);
         }
     }
-    #define CFG280(prefix) \
+    #define CFGBMP280(prefix) \
         CFG_GET(prAct,prefix); \
         CFG_GET(tmAct,prefix);\
         CFG_GET(tmSrc,prefix);\
@@ -94,28 +94,28 @@ class BMP280Config : public SensorBase{
         {
             busId = 1;
             addr = 0x76;
-            CFG280(BMP28011);
+            CFGBMP280(BME28011);
             ok=true;
         }
         if (prefix == PRFX2)
         {
             busId = 1;
             addr = 0x77;
-            CFG280(BMP28012);
+            CFGBMP280(BME28012);
             ok=true;
         }
         if (prefix == PRFX3)
         {
             busId = 2;
             addr = 0x76;
-            CFG280(BMP28021);
+            CFGBMP280(BME28021);
             ok=true;
         }
         if (prefix == PRFX4)
         {
             busId = 2;
             addr = 0x77;
-            CFG280(BMP28022);
+            CFGBMP280(BME28022);
         }
         intv *= 1000;
     }

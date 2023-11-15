@@ -2,6 +2,7 @@
 #include "GwIicSensors.h"
 #include "GwHardware.h"
 #include "GwBME280.h"
+#include "GwBMP280.h"
 #include "GwQMP6988.h"
 #include "GwSHT3X.h"
 #include <map>
@@ -38,6 +39,7 @@ void initIicTask(GwApi *api){
     registerSHT3X(api,sensors);
     registerQMP6988(api,sensors);
     registerBME280(api,sensors);
+    registerBMP280(api,sensors);
     for (auto it=sensors.begin();it != sensors.end();it++){
         if ((*it)->preinit(api)) addTask=true;
     }

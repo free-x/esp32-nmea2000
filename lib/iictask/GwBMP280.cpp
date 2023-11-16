@@ -17,10 +17,10 @@
     #include <Adafruit_BMP280.h>
 #endif
 #ifdef _GWBMP280
-#define PRFX1 "BME28011"
-#define PRFX2 "BME28012"
-#define PRFX3 "BME28021"
-#define PRFX4 "BME28022"
+#define PRFX1 "BMP28011"
+#define PRFX2 "BMP28012"
+#define PRFX3 "BMP28021"
+#define PRFX4 "BMP28022"
 class BMP280Config : public SensorBase{
     public:
     bool prAct=true;
@@ -95,28 +95,28 @@ class BMP280Config : public SensorBase{
         {
             busId = 1;
             addr = 0x76;
-            CFGBMP280(BME28011);
+            CFGBMP280(BMP28011);
             ok=true;
         }
         if (prefix == PRFX2)
         {
             busId = 1;
             addr = 0x77;
-            CFGBMP280(BME28012);
+            CFGBMP280(BMP28012);
             ok=true;
         }
         if (prefix == PRFX3)
         {
             busId = 2;
             addr = 0x76;
-            CFGBMP280(BME28021);
+            CFGBMP280(BMP28021);
             ok=true;
         }
         if (prefix == PRFX4)
         {
             busId = 2;
             addr = 0x77;
-            CFGBMP280(BME28022);
+            CFGBMP280(BMP28022);
         }
         intv *= 1000;
     }

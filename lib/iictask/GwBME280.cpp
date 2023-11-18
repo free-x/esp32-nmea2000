@@ -66,28 +66,37 @@ class BME280Config : public SensorBase{
     }
     virtual void measure(GwApi *api, TwoWire *wire, int counterId)
     {
+        
         if (!device)
             return;
         GwLog *logger = api->getLogger();
+        float pressure = N2kDoubleNA;
+        float temperature = N2kDoubleNA;
+        float humidity = N2kDoubleNA;
+        float computed = N2kDoubleNA;
         if (prAct)
         {
-            float pressure = device->readPressure();
-            float computed = pressure + prOff;
+            pressure = device->readPressure();
+            computed = pressure + prOff;
             LOG_DEBUG(GwLog::DEBUG, "%s measure %2.0fPa, computed %2.0fPa", prefix.c_str(), pressure, computed);
             sendN2kPressure(api, *this, computed, counterId);
         }
         if (tmAct)
         {
-            float temperature = device->readTemperature(); // offset is handled internally
+            temperature = device->readTemperature(); // offset is handled internally
             temperature = CToKelvin(temperature);
             LOG_DEBUG(GwLog::DEBUG, "%s measure temp=%2.1f", prefix.c_str(), temperature);
             sendN2kTemperature(api, *this, temperature, counterId);
         }
         if (huAct && sensorId == 0x60)
         {
-            float humidity = device->readHumidity();
+            humidity = device->readHumidity();
             LOG_DEBUG(GwLog::DEBUG, "%s read humid=%02.0f", prefix.c_str(), humidity);
             sendN2kHumidity(api, *this, humidity, counterId);
+        }
+        if (tmAct || prAct || (huAct && sensorId == 0x60))
+        {
+            sendN2kEnvironmentalParameters(api, *this, temperature, humidity, computed,counterId);
         }
     }
     #define CFG280(prefix) \

@@ -27,6 +27,7 @@ class BMP280Config : public SensorBase{
     bool tmAct=true;
     tN2kTempSource tmSrc=tN2kTempSource::N2kts_InsideTemperature;
     tN2kPressureSource prSrc=tN2kPressureSource::N2kps_Atmospheric;
+    tN2kHumiditySource huSrc=tN2kHumiditySource::N2khs_Undef;
     String tmNam="Temperature";
     String prNam="Pressure";
     float tmOff=0;
@@ -63,19 +64,27 @@ class BMP280Config : public SensorBase{
         if (!device)
             return;
         GwLog *logger = api->getLogger();
+        float pressure = N2kDoubleNA;
+        float temperature = N2kDoubleNA;
+        float humidity = N2kDoubleNA; 
+        float computed = N2kDoubleNA;
         if (prAct)
         {
-            float pressure = device->readPressure();
-            float computed = pressure + prOff;
+            pressure = device->readPressure();
+            computed = pressure + prOff;
             LOG_DEBUG(GwLog::DEBUG, "%s measure %2.0fPa, computed %2.0fPa", prefix.c_str(), pressure, computed);
             sendN2kPressure(api, *this, computed, counterId);
         }
         if (tmAct)
         {
-            float temperature = device->readTemperature(); // offset is handled internally
+            temperature = device->readTemperature(); // offset is handled internally
             temperature = CToKelvin(temperature);
             LOG_DEBUG(GwLog::DEBUG, "%s measure temp=%2.1f", prefix.c_str(), temperature);
             sendN2kTemperature(api, *this, temperature, counterId);
+        }
+        if (tmAct || prAct )
+        {
+            sendN2kEnvironmentalParameters(api, *this, temperature, humidity, computed,counterId);
         }
     }
     #define CFGBMP280(prefix) \

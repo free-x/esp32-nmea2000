@@ -1449,6 +1449,52 @@ private:
         finalizeXdr();
     }
 
+    void Handle130323(const tN2kMsg &msg){
+        tN2kMeteorlogicalStationData MeteoData;
+        if (!ParseN2kPGN130323(msg,MeteoData)){
+           LOG_DEBUG(GwLog::DEBUG,"unable to parse PGN %d",msg.PGN);
+           return;
+        }
+        int i=0;
+        GwXDRFoundMapping mapping;
+        if (MeteoData.AtmosphericPressure != N2kDoubleNA) {
+            mapping=xdrMappings->getMapping(MeteoData.AtmosphericPressure,XDRPRESSURE,N2kps_Atmospheric,0,0);
+            if (updateDouble(&mapping,MeteoData.AtmosphericPressure)){
+                LOG_DEBUG(GwLog::DEBUG+1,"found pressure mapping %s",mapping.definition->toString().c_str());
+                addToXdr(mapping.buildXdrEntry(MeteoData.AtmosphericPressure));
+                i++;
+            }
+        }
+        if (MeteoData.OutsideAmbientAirTemperature != N2kDoubleNA) {
+            mapping=xdrMappings->getMapping(MeteoData.OutsideAmbientAirTemperature, XDRTEMP,N2kts_OutsideTemperature,0,0);
+            if (updateDouble(&mapping,MeteoData.OutsideAmbientAirTemperature)){
+                LOG_DEBUG(GwLog::DEBUG+1,"found temperature mapping %s",mapping.definition->toString().c_str());
+                addToXdr(mapping.buildXdrEntry(MeteoData.OutsideAmbientAirTemperature));
+                i++;
+            }    
+        }
+        if (i>0) finalizeXdr();
+        if (MeteoData.WindSpeed != N2kDoubleNA && MeteoData.WindDirection != N2kDoubleNA && MeteoData.WindReference != N2kWind_Unavailable) {
+            tNMEA0183Msg NMEA0183Msg;
+            tNMEA0183WindReference NMEA0183Reference;
+            GwConverterConfig::WindMapping mapping=config.findWindMapping(MeteoData.WindReference);
+            bool shouldSend = false;
+            if (mapping.valid){
+                if (mapping.nmea0183Type == GwConverterConfig::WindMapping::AWA_AWS){
+                    NMEA0183Reference = NMEA0183Wind_Apparent;
+                    updateDouble(boatData->AWA, MeteoData.WindDirection);
+                    updateDouble(boatData->AWS, MeteoData.WindSpeed);
+                    //setMax(boatData->MaxAws, MeteoData.WindGusts);
+                    setMax(boatData->MaxAws, boatData->AWS);
+                    shouldSend = true; 
+                }
+            }
+            if (shouldSend && NMEA0183SetMWV(NMEA0183Msg, formatCourse(MeteoData.WindDirection), NMEA0183Reference, MeteoData.WindSpeed, talkerId)){
+                    SendMessage(NMEA0183Msg);
+            }         
+        }
+    }
+
     void registerConverters()
     {
       //register all converter functions
@@ -1484,6 +1530,7 @@ private:
       converters.registerConverter(127488UL, &N2kToNMEA0183Functions::Handle127488);
       converters.registerConverter(130316UL, &N2kToNMEA0183Functions::Handle130316);
       converters.registerConverter(127257UL, &N2kToNMEA0183Functions::Handle127257);
+      converters.registerConverter(130323UL, &N2kToNMEA0183Functions::Handle130323);
 #define HANDLE_AIS
 #ifdef HANDLE_AIS
       converters.registerConverter(129038UL, &N2kToNMEA0183Functions::HandleAISClassAPosReport);  // AIS Class A Position Report, Message Type 1
